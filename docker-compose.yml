@@ -1,0 +1,19 @@
+services:
+    backend:
+        build: 
+            context: ./backend
+        ports:
+            - "8000:8000"
+        env_file:
+            - ./backend/.env
+    
+    frontend:
+        build:
+            context: ./frontend
+        ports:
+            - "3000:3000"
+        environment:
+            # Frontend doesn't technically need STRAVA_ACCESS_TOKEN at runtime since it calls backend, 
+            # but if you add server-side calls later it might.
+            # Currently it fetches from localhost/127.0.0.1 which is the USER's browser perspective.
+            - NEXT_PUBLIC_API_URL=http://localhost:8000
