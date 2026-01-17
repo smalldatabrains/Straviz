@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 
@@ -9,7 +9,7 @@ import Layout from '../components/Layout';
 // Dynamically import Map component with no SSR because Leaflet uses window
 const Map = dynamic(() => import('../components/Map'), { ssr: false });
 
-export default function Home() {
+function HomeContent() {
   const searchParams = useSearchParams();
   const year = searchParams.get('year') || 'last_year';
 
@@ -39,22 +39,30 @@ export default function Home() {
   }, [year]);
 
   return (
-    <Layout>
-      <div className="flex min-h-screen flex-col items-center justify-between">
-        <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex p-4">
-          <h1 className="text-4xl font-bold">Straviz - Your Year in Lines</h1>
-        </div>
-
-        <div className="w-full h-[80vh] relative">
-          {loading ? (
-            <div className="flex justify-center items-center h-full">Loading activities...</div>
-          ) : error ? (
-            <div className="flex justify-center items-center h-full text-red-500">Error: {error}</div>
-          ) : (
-            <Map activities={activities} />
-          )}
-        </div>
+    <div className="flex min-h-screen flex-col items-center justify-between">
+      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex p-4">
+        <h1 className="text-4xl font-bold">Straviz - Your Year in Lines</h1>
       </div>
+
+      <div className="w-full h-[80vh] relative">
+        {loading ? (
+          <div className="flex justify-center items-center h-full">Loading activities...</div>
+        ) : error ? (
+          <div className="flex justify-center items-center h-full text-red-500">Error: {error}</div>
+        ) : (
+          <Map activities={activities} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Layout>
+      <Suspense fallback={<div>Loading map...</div>}>
+        <HomeContent />
+      </Suspense>
     </Layout>
   );
 }
