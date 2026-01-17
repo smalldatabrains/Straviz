@@ -20,7 +20,8 @@ function HomeContent() {
   const fetchActivities = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://127.0.0.1:8000/strava/data?year=${year}`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+      const res = await fetch(`${apiUrl}/strava/data?year=${year}`);
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.detail || `Error ${res.status}: ${res.statusText}`);
