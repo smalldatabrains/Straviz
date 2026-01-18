@@ -88,10 +88,32 @@ if __name__ == "__main__":
     # Actually, we can use the `shutdown` logic.
     pass
 
+
 # Redefining logic to be simpler for a script run by user
 import http.server
 import socketserver
 import urllib.parse
+import os
+import requests
+import threading
+import contextlib
+from dotenv import load_dotenv
+
+# Load existing .env if present
+env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+load_dotenv(env_path)
+
+print("To get a token with 'activity:read_all' scope, we need your Client ID and Client Secret.")
+print("You can find these at https://www.strava.com/settings/api under 'My API Application'.")
+print("---------------------------------------------------------------------------------------")
+
+client_id = os.getenv("STRAVA_CLIENT_ID")
+if not client_id:
+    client_id = input("Enter Client ID: ").strip()
+
+client_secret = os.getenv("STRAVA_CLIENT_SECRET")
+if not client_secret:
+    client_secret = input("Enter Client Secret: ").strip()
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -107,30 +129,33 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             
             # Exchange
             print(f"Code received: {code}")
-            # we need to ensure we don't block the response so we do the post after?
-            # actually we can just output the code and let the main thread handle it?
-            # threading is messy. Let's do the exchange here synchronously?
-            import requests
+            
             res = requests.post("https://www.strava.com/oauth/token", data={
                 "client_id": client_id,
                 "client_secret": client_secret,
                 "code": code,
                 "grant_type": "authorization_code"
             })
+            
             if res.ok:
                 data = res.json()
                 token = data['access_token']
+                refresh_token = data['refresh_token']
+                
                 print(f"\n\n>>> NEW TOKEN: {token} <<<\n")
                 
-                env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+                # Write all vars to .env
                 with open(env_path, "w") as f:
                     f.write(f"STRAVA_ACCESS_TOKEN={token}\n")
-                print(f"Updated {env_path}")
+                    f.write(f"STRAVA_REFRESH_TOKEN={refresh_token}\n")
+                    f.write(f"STRAVA_CLIENT_ID={client_id}\n")
+                    f.write(f"STRAVA_CLIENT_SECRET={client_secret}\n")
+                    
+                print(f"Updated {env_path} with new tokens and credentials.")
             else:
                  print(f"Error: {res.text}")
 
             # Exit
-            import threading
             threading.Thread(target=self.server.shutdown).start()
 
 PORT = 8080
