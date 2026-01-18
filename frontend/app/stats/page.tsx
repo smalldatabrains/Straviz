@@ -3,13 +3,18 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Layout from '../../components/Layout';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+import ActivityTypePieChart from '@/components/charts/ActivityTypePieChart';
+import MonthlyVolumeBarChart from '@/components/charts/MonthlyVolumeBarChart';
+import ElevationAreaChart from '@/components/charts/ElevationAreaChart';
+import IntensityScatterChart from '@/components/charts/IntensityScatterChart';
+import ActivityHeatmap from '@/components/charts/ActivityHeatmap';
 
 function StatsContent() {
     const searchParams = useSearchParams();
     const year = searchParams.get('year') || 'last_year';
 
-    const [data, setData] = useState<any[]>([]);
+    const [activities, setActivities] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
@@ -22,8 +27,8 @@ function StatsContent() {
                 const errorData = await res.json().catch(() => ({}));
                 throw new Error(errorData.detail || `Error ${res.status}: ${res.statusText}`);
             }
-            const activities = await res.json();
-            processData(activities);
+            const data = await res.json();
+            setActivities(data);
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -31,81 +36,54 @@ function StatsContent() {
         }
     };
 
-    const processData = (activities: any[]) => {
-        // Sort by date
-        const sorted = activities.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
-
-        let cumDist = 0;
-        let cumElev = 0;
-
-        const chartData = sorted.map(act => {
-            cumDist += (act.distance / 1000); // meters to km
-            cumElev += act.total_elevation_gain;
-            return {
-                date: new Date(act.start_date).toLocaleDateString(),
-                distance: parseFloat(cumDist.toFixed(2)),
-                elevation: Math.round(cumElev)
-            };
-        });
-
-        setData(chartData);
-    };
-
     useEffect(() => {
         fetchActivities();
     }, [year]);
 
     return (
-        <div className="flex flex-col items-center p-4 w-full">
-            <h1 className="text-3xl font-bold mb-8">Cumulative Statistics</h1>
+        <div className="flex flex-col items-center p-6 w-full max-w-[1600px] mx-auto">
+            <h1 className="text-3xl font-bold mb-8 text-zinc-900 dark:text-zinc-100">Statistics Dashboard</h1>
 
             {loading ? (
-                <div>Loading stats...</div>
+                <div className="flex items-center justify-center p-12">
+                    <span className="text-lg text-zinc-500 animate-pulse">Loading stats...</span>
+                </div>
             ) : error ? (
-                <div className="text-red-500">Error: {error}</div>
+                <div className="text-red-500 bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">Error: {error}</div>
             ) : (
-                <div className="w-full max-w-6xl space-y-12">
-                    <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-                        <h2 className="text-xl font-semibold mb-4 text-white">Cumulative Distance (km)</h2>
-                        <div className="h-[400px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={data}>
-                                    <defs>
-                                        <linearGradient id="colorDist" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-                                            <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <XAxis dataKey="date" stroke="#ccc" />
-                                    <YAxis stroke="#ccc" />
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                                    <Tooltip contentStyle={{ backgroundColor: '#333', borderColor: '#444', color: '#fff' }} />
-                                    <Area type="monotone" dataKey="distance" stroke="#8884d8" fillOpacity={1} fill="url(#colorDist)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
+                <div className="w-full space-y-6">
+                    {/* Top Row: Key Metrics & Distribution */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <ActivityTypePieChart activities={activities} />
+                        <MonthlyVolumeBarChart activities={activities} />
+                        <ElevationAreaChart activities={activities} />
+                    </div>
+
+                    {/* Middle Row: Deep Dives */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <IntensityScatterChart activities={activities} />
+                        {/* Placeholder for future expansion or another metric, 
+                            using Heatmap spanning full width below instead for better visual balance */}
+                        <div className="h-80 bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-800 flex flex-col justify-center items-center text-center">
+                            <h3 className="text-lg font-semibold mb-2 text-zinc-900 dark:text-zinc-100">Summary</h3>
+                            <div className="grid grid-cols-2 gap-8 mt-4">
+                                <div>
+                                    <p className="text-sm text-zinc-500">Total Activities</p>
+                                    <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{activities.length}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-zinc-500">Total Distance</p>
+                                    <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+                                        {(activities.reduce((acc, curr) => acc + curr.distance, 0) / 1000).toFixed(0)} <span className="text-base font-normal text-zinc-500">km</span>
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-                        <h2 className="text-xl font-semibold mb-4 text-white">Cumulative Elevation Gain (m)</h2>
-                        <div className="h-[400px] w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={data}>
-                                    <defs>
-                                        <linearGradient id="colorElev" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
-                                            <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <XAxis dataKey="date" stroke="#ccc" />
-                                    <YAxis stroke="#ccc" />
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                                    <Tooltip contentStyle={{ backgroundColor: '#333', borderColor: '#444', color: '#fff' }} />
-                                    <Area type="monotone" dataKey="elevation" stroke="#82ca9d" fillOpacity={1} fill="url(#colorElev)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
+                    {/* Bottom Row: Frequency */}
+                    <ActivityHeatmap activities={activities} />
+
                 </div>
             )}
         </div>
