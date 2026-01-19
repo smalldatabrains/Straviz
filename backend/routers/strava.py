@@ -1,27 +1,39 @@
 from fastapi import APIRouter, HTTPException, Depends
-from typing import Optional
+from typing import Optional, List
 import os
-import httpx
-from services.strava_service import get_strava_data
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
+from database import get_session
+from models import Activity
+from services.strava_service import sync_activities
+from datetime import datetime
 
 router = APIRouter(
     prefix="/strava",
     tags=["strava"]
 )
 
-from datetime import datetime, timedelta
-import time
+@router.post("/sync")
+async def sync_strava_data(
+    session: AsyncSession = Depends(get_session)
+):
+    token = os.getenv("STRAVA_ACCESS_TOKEN")
+    if not token:
+        raise HTTPException(status_code=401, detail="STRAVA_ACCESS_TOKEN not set")
+    
+    try:
+        count = await sync_activities(session, token)
+        return {"message": f"Synced {count} activities"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
 
 @router.get("/data")
-async def read_strava_data(token: Optional[str] = None, year: Optional[str] = "last_year"):
+async def read_strava_data(
+    year: Optional[str] = "last_year",
+    session: AsyncSession = Depends(get_session)
+):
     try:
-        if not token:
-            token = os.getenv("STRAVA_ACCESS_TOKEN")
-        
-        if not token:
-             raise HTTPException(status_code=401, detail="No access token provided and STRAVA_ACCESS_TOKEN not set in environment")
-        
-        params = {"per_page": 200}
+        query = select(Activity)
         
         if year:
             try:
@@ -30,39 +42,28 @@ async def read_strava_data(token: Optional[str] = None, year: Optional[str] = "l
                 else:
                      target_year = int(year)
                 
-                # Strava API expects epoch timestamps
                 start_date = datetime(target_year, 1, 1)
                 end_date = datetime(target_year, 12, 31, 23, 59, 59)
                 
-                params["after"] = int(start_date.timestamp())
-                params["before"] = int(end_date.timestamp())
+                query = query.where(Activity.start_date >= start_date, Activity.start_date <= end_date)
             except ValueError:
-                # Fallback or error if year is invalid
                 pass
 
-        all_activities = []
-        page = 1
-        per_page = 200
+        result = await session.exec(query)
+        activities = result.all()
         
-        while True:
-            params["page"] = page
-            params["per_page"] = per_page
-            
-            page_data = await get_strava_data(access_token=token, endpoint="/athlete/activities", params=params)
-             
-            if not page_data:
-                break
-                
-            all_activities.extend(page_data)
-            
-            if len(page_data) < per_page:
-                break
-                
-            page += 1
-            
-        return all_activities
-    except httpx.HTTPStatusError as e:
-        # Pass through the status code and details from Strava
-        raise HTTPException(status_code=e.response.status_code, detail=f"Strava API Error: {e.response.text}")
+        # Transform to match frontend expectations (nested map object)
+        transformed = []
+        for activity in activities:
+            activity_dict = activity.dict()
+            # Restructure map data to nested format
+            activity_dict["map"] = {
+                "polyline": activity_dict.pop("map_polyline"),
+                "summary_polyline": activity_dict.pop("map_summary_polyline")
+            }
+            transformed.append(activity_dict)
+        
+        return transformed
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
