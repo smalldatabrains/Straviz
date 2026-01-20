@@ -8,11 +8,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
+POSTGRES_USER = os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+POSTGRES_DB = os.getenv("POSTGRES_DB")
 
 # Handle case where DATABASE_URL is not set (e.g. local dev without docker)
 if not DATABASE_URL:
     # Default to localhost for development if not specified
-    DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/straviz"
+    DATABASE_URL = f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:5432/{POSTGRES_DB}"
 
 engine = create_async_engine(DATABASE_URL, echo=True, future=True)
 
