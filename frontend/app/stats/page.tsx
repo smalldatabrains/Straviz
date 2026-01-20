@@ -9,6 +9,12 @@ import MonthlyVolumeBarChart from '@/components/charts/MonthlyVolumeBarChart';
 import ElevationAreaChart from '@/components/charts/ElevationAreaChart';
 import IntensityScatterChart from '@/components/charts/IntensityScatterChart';
 import ActivityHeatmap from '@/components/charts/ActivityHeatmap';
+import CumulativeDistanceChart from '@/components/charts/CumulativeDistanceChart';
+import PaceEvolutionChart from '@/components/charts/PaceEvolutionChart';
+import TimeOfDayChart from '@/components/charts/TimeOfDayChart';
+import NewVsRepeatedChart from '@/components/charts/NewVsRepeatedChart';
+import LongestRunCard from '@/components/charts/LongestRunCard';
+import PersonalizedSummaryCard from '@/components/charts/PersonalizedSummaryCard';
 
 function StatsContent() {
     const searchParams = useSearchParams();
@@ -42,7 +48,8 @@ function StatsContent() {
 
     return (
         <div className="flex flex-col items-center p-6 w-full max-w-[1600px] mx-auto">
-            <h1 className="text-3xl font-bold mb-8 text-zinc-900 dark:text-zinc-100">Statistics Dashboard</h1>
+            <h1 className="text-4xl font-bold mb-2 text-zinc-900 dark:text-zinc-100">Statistics Dashboard</h1>
+            <p className="text-zinc-600 dark:text-zinc-400 mb-8">Your year in data and insights</p>
 
             {loading ? (
                 <div className="flex items-center justify-center p-12">
@@ -51,38 +58,47 @@ function StatsContent() {
             ) : error ? (
                 <div className="text-red-500 bg-red-50 dark:bg-red-900/20 p-4 rounded-lg">Error: {error}</div>
             ) : (
-                <div className="w-full space-y-6">
-                    {/* Top Row: Key Metrics & Distribution */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <ActivityTypePieChart activities={activities} />
-                        <MonthlyVolumeBarChart activities={activities} />
-                        <ElevationAreaChart activities={activities} />
-                    </div>
+                <div className="w-full space-y-8">
+                    {/* Hero Section: Personalized Summary */}
+                    <section>
+                        <PersonalizedSummaryCard activities={activities} />
+                    </section>
 
-                    {/* Middle Row: Deep Dives */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <IntensityScatterChart activities={activities} />
-                        {/* Placeholder for future expansion or another metric, 
-                            using Heatmap spanning full width below instead for better visual balance */}
-                        <div className="h-80 bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-lg border border-zinc-200 dark:border-zinc-800 flex flex-col justify-center items-center text-center">
-                            <h3 className="text-lg font-semibold mb-2 text-zinc-900 dark:text-zinc-100">Summary</h3>
-                            <div className="grid grid-cols-2 gap-8 mt-4">
-                                <div>
-                                    <p className="text-sm text-zinc-500">Total Activities</p>
-                                    <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">{activities.length}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-zinc-500">Total Distance</p>
-                                    <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
-                                        {(activities.reduce((acc, curr) => acc + curr.distance, 0) / 1000).toFixed(0)} <span className="text-base font-normal text-zinc-500">km</span>
-                                    </p>
-                                </div>
-                            </div>
+                    {/* Activity Overview Section */}
+                    <section>
+                        <h2 className="text-2xl font-bold mb-4 text-zinc-900 dark:text-zinc-100">Activity Overview</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <ActivityTypePieChart activities={activities} />
+                            <MonthlyVolumeBarChart activities={activities} />
+                            <TimeOfDayChart activities={activities} />
                         </div>
-                    </div>
+                    </section>
 
-                    {/* Bottom Row: Frequency */}
-                    <ActivityHeatmap activities={activities} />
+                    {/* Performance Metrics Section */}
+                    <section>
+                        <h2 className="text-2xl font-bold mb-4 text-zinc-900 dark:text-zinc-100">Performance Metrics</h2>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <CumulativeDistanceChart activities={activities} />
+                            <ElevationAreaChart activities={activities} />
+                            <PaceEvolutionChart activities={activities} />
+                            <IntensityScatterChart activities={activities} />
+                        </div>
+                    </section>
+
+                    {/* Exploration Section */}
+                    <section>
+                        <h2 className="text-2xl font-bold mb-4 text-zinc-900 dark:text-zinc-100">Exploration & Highlights</h2>
+                        <div className="space-y-6">
+                            <LongestRunCard activities={activities} />
+                            <NewVsRepeatedChart activities={activities} />
+                        </div>
+                    </section>
+
+                    {/* Activity Frequency Section */}
+                    <section>
+                        <h2 className="text-2xl font-bold mb-4 text-zinc-900 dark:text-zinc-100">Activity Frequency</h2>
+                        <ActivityHeatmap activities={activities} />
+                    </section>
 
                 </div>
             )}
