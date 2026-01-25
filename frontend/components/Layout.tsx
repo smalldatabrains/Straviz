@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import NavLink from './NavLink';
 import YearSelector from './YearSelector';
 import { Suspense } from 'react';
 
@@ -9,11 +9,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <nav className="flex justify-between max-w-5xl mx-auto w-full items-center">
                     <div className="font-bold text-xl">Straviz</div>
                     <div className="flex gap-8 items-center">
-                        <ul className="flex gap-4">
-                            <li><Link href="/" className="hover:text-blue-400">Map</Link></li>
-                            <li><Link href="/stats" className="hover:text-blue-400">Statistics</Link></li>
-                        </ul>
                         <Suspense fallback={<div>Loading...</div>}>
+                            <ul className="flex gap-4">
+                                <li><NavLink href="/" className="hover:text-blue-400">Map</NavLink></li>
+                                <li><NavLink href="/stats" className="hover:text-blue-400">Statistics</NavLink></li>
+                            </ul>
                             <YearSelector />
                         </Suspense>
                     </div>
