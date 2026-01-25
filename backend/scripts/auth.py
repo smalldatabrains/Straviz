@@ -100,7 +100,7 @@ import contextlib
 from dotenv import load_dotenv
 
 # Load existing .env if present
-env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
+env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".env")
 load_dotenv(env_path)
 
 print("To get a token with 'activity:read_all' scope, we need your Client ID and Client Secret.")
