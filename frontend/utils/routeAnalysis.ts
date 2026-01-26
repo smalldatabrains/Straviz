@@ -130,9 +130,13 @@ export function analyzeRouteFrequency(activities: StravaActivity[]): Map<number,
  * Find the longest run/activity by distance
  */
 export function findLongestRun(activities: StravaActivity[]): StravaActivity | null {
-    if (activities.length === 0) return null;
+    const runActivities = activities.filter(activity =>
+        activity.type === 'Run' || activity.type === 'TrailRun'
+    );
 
-    return activities.reduce((longest, current) =>
+    if (runActivities.length === 0) return null;
+
+    return runActivities.reduce((longest, current) =>
         current.distance > longest.distance ? current : longest
     );
 }
