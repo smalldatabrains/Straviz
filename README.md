@@ -2,9 +2,11 @@
 
 **Straviz** is a web application that visualizes your Strava activities. It fetches your activity data from Strava, stores it in a database, and provides a rich set of interactive charts and maps to explore your fitness journey.
 
-![Straviz Dashboard](image.png)
+![Straviz map](image-2.png)
 
 ## Features
+
+![Straviz stats](image-3.png)
 
 - **Activity Synchronization**: Automatically syncs your activities from Strava.
 - **Interactive Map**: Visualize your routes on a map.
@@ -96,7 +98,10 @@ Straviz/
 
 ## Usage
 
-1.  **Sync Data**: On the main dashboard, use the "Sync" button (if implemented) or ensure the backend background task is running (by monitoring docker logs) to fetch your latest activities.
+1.  **Sync Data**: enter the docker container and run the sync_db.py script in the scripts folder
+```
+docker exec -it straviz-backend-1 scripts/sync_db.py
+```
 2.  **View Stats**: Navigate to the "Statistics" page to view detailed charts.
 3.  **Explore Map**: Use the main map view to filter and see your route history.
 
