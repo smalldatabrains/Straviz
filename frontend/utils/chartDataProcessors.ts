@@ -29,27 +29,34 @@ export const groupActivitiesByType = (activities: StravaActivity[]) => {
     }));
 };
 
-// 2. Monthly Volume (Bar Chart)
-export const groupActivitiesByMonth = (activities: StravaActivity[]) => {
-    const months = [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    ];
+// Helper to get ISO week number
+const getWeekNumber = (date: Date) => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+};
 
-    const monthlyData = Array(12).fill(0).map((_, i) => ({
-        name: months[i],
+// 2. Weekly Volume (Bar Chart)
+export const groupActivitiesByWeek = (activities: StravaActivity[]) => {
+    // Initialize 53 weeks (some years have 53)
+    const weeklyData = Array(53).fill(0).map((_, i) => ({
+        name: `W${i + 1}`,
+        fullDate: "", // We can add date range here if needed later
         distance: 0, // km
     }));
 
     activities.forEach((activity) => {
         const date = new Date(activity.start_date_local);
-        const monthIndex = date.getMonth(); // 0-11
-        // Convert meters to km
-        monthlyData[monthIndex].distance += activity.distance / 1000;
+        const weekIndex = getWeekNumber(date) - 1; // 0-52
+        if (weekIndex >= 0 && weekIndex < 53) {
+            weeklyData[weekIndex].distance += activity.distance / 1000;
+        }
     });
 
     // Round to 1 decimal
-    return monthlyData.map(d => ({
+    return weeklyData.map(d => ({
         ...d,
         distance: Math.round(d.distance * 10) / 10
     }));

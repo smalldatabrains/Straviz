@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Layout from '../../components/Layout';
 
 import ActivityTypePieChart from '@/components/charts/ActivityTypePieChart';
-import MonthlyVolumeBarChart from '@/components/charts/MonthlyVolumeBarChart';
+import WeeklyVolumeBarChart from '@/components/charts/WeeklyVolumeBarChart';
 import ElevationAreaChart from '@/components/charts/ElevationAreaChart';
 import IntensityScatterChart from '@/components/charts/IntensityScatterChart';
 import ActivityHeatmap from '@/components/charts/ActivityHeatmap';
@@ -69,7 +69,7 @@ function StatsContent() {
                         <h2 className="text-2xl font-bold mb-4 text-zinc-900 dark:text-zinc-100">Activity Overview</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             <ActivityTypePieChart activities={activities} />
-                            <MonthlyVolumeBarChart activities={activities} />
+                            <WeeklyVolumeBarChart activities={activities} />
                             <TimeOfDayChart activities={activities} />
                         </div>
                     </section>
